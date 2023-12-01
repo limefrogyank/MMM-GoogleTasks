@@ -1,4 +1,4 @@
-# Welcome to the MMM-PrometheusAlerts contributing guide <!-- omit in toc -->
+# Welcome to the MMM-GoogleTasks contributing guide <!-- omit in toc -->
 
 Thank you for investing your time in contributing to our project!
 
