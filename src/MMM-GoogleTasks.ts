@@ -96,6 +96,11 @@ Module.register<Config>("MMM-GoogleTasks", {
       } else {
         this.getLogger().warn("Summary data not formatted correctly.");
       }
+    } else if (notification === ModuleNotification.COMPLETERESULT) {
+      this.getLogger().info(`Got completion update notification`);
+      //this.sendSocketNotification(ModuleNotification.RETRIEVE,{});
+      this.updateDom();
+      this.getLogger().info(`DOM updated`);
     }
     // If an error occurs, reschedule an update to try again
     if (notification === ModuleNotification.ERROR) {
@@ -107,6 +112,6 @@ Module.register<Config>("MMM-GoogleTasks", {
     if (!this.isLoaded) {
       return getLoadingView(this.config);
     }
-    return getTaskView(this.taskData, this.config);
+    return getTaskView(this.taskData, this.config, this);
   }
 });

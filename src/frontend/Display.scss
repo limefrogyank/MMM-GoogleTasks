@@ -7,10 +7,16 @@
     transform: translateY(-0.6em);
   }
 
+  // .subitem {
+  //   padding-left: 1em;
+  // }
+
+
   .item {
-    text-align: right;
+    text-align: left;
     padding-bottom: 0.25em;
 
+  
     .date {
       padding: .1em .75em;
       margin: 0em .5em;
@@ -44,8 +50,19 @@
     }
 
     .title {
-      float: inline-end;
+      float: inline-start;     
     }
+
+    .pending {
+      color:red;
+    }
+
+
+    .completed {
+      text-decoration: line-through;
+    }
+    
+    
   }
 
   .fa {

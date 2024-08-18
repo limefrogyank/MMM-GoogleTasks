@@ -5,7 +5,7 @@ import readline from 'readline';
 import fs from 'fs';
 
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/tasks.readonly'];
+const SCOPES = ['https://www.googleapis.com/auth/tasks.readonly', 'https://www.googleapis.com/auth/tasks'];
 
 program
   .option('-c, --credential-file <credentialFile>', 'path to credential file', './credentials.json')
@@ -16,12 +16,14 @@ const options = program.opts();
 
 // Load client secrets from a local file.
 fs.readFile(options.credentialFile, (err, content) => {
+  console.log(`${content}`);
   if (err) return console.log('Error loading client secret file:', err);
 
   let currentTokens = [];
+  
   if (fs.existsSync(options.tokenFile)) {
     const token = fs.readFileSync(options.tokenFile, "utf-8");
-    
+
     currentTokens = JSON.parse(token);
     currentTokens.forEach(element => {
       console.log(element.account);
@@ -54,6 +56,7 @@ function authorize(tokenPath, credentials, currentTokens, account, callback) {
   const oAuth2Client = new google.auth.OAuth2(
       client_id, client_secret, redirect_uris[0]);
 
+      
   const existingToken = currentTokens.find(element => element.account === account);
 
   if (!existingToken)

@@ -8,6 +8,7 @@ import { GaxiosError } from "googleapis-common";
 import { CredentialsFile } from "./types/Google";
 import { ModuleNotification } from "./types/ModuleNotification";
 import { GoogleTaskService } from "./backend/GoogleTaskService";
+import { Task } from "./types/Display";
 
 const logger = new LogWrapper("MMM-GoogleTasks", Log);
 
@@ -30,6 +31,12 @@ module.exports = NodeHelper.create({
         logger.error("Task Service not configured.");
       } else {
         this.getList(payload);
+      }
+    } else if (notification === ModuleNotification.COMPLETE){
+      if (!this.taskService){
+        logger.error("Task Service not configured");
+      } else {
+        this.sendComplete(payload);
       }
     }
   },
@@ -72,5 +79,30 @@ module.exports = NodeHelper.create({
         logger.error(`Error retrieving Google Tasks: ${e}`);
       }
     }
+  },
+
+  sendComplete: async function (item: Task) {
+    if (!this.taskService) {
+      logger.log("Refresh required");
+      return;
+    }
+    try {
+      const payload = await this.taskService.setComplete(item);
+      if (payload) {
+        logger.info(`Sending completion notification to frontend ${payload}`);
+        this.sendSocketNotification(ModuleNotification.COMPLETERESULT, true);
+      } else {
+        logger.warn("Completion didn't work.");
+      }
+    } catch (e) {
+      if ((e as GaxiosError).response) {
+        const err = e as GaxiosError;
+        logger.error(err.message);
+      } else {
+        logger.error(`Error setting completion: ${e}`);
+      }
+    }
   }
+
+
 });

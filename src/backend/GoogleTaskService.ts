@@ -7,6 +7,8 @@ import { GaxiosError } from "googleapis-common";
 import { add, formatRFC3339 } from "date-fns";
 import { CredentialsFile } from "../types/Google";
 
+const TaskServiceNotInitialized: string = "Task Service not initialized";
+
 export class GoogleTaskService {
   taskService?: tasks_v1.Tasks;
   pending: boolean = false;
@@ -22,6 +24,46 @@ export class GoogleTaskService {
     this.credentials = credentials;
   }
 
+  async setComplete(item: Display.Task): Promise<boolean | undefined> {
+    if (this.pending) {
+      return;
+    }
+    this.pending = true;
+
+    if (!this.taskService) {
+      this.logger.warn(TaskServiceNotInitialized);
+      return false;
+    }
+
+    try {
+      this.logger.warn(`taskId: ${item.id}`);
+      const update: tasks_v1.Params$Resource$Tasks$Update = {
+        tasklist: item.listId,
+        task: item.id,
+        requestBody: {
+          id: item.id,
+          title: item.title,
+          status: item.status,
+          parent: item.parent,
+          position: item.position.toString(),
+          notes: item.notes
+        }
+      }
+
+      await this.taskService.tasks.update(update);
+      this.logger.warn('finished completion update');
+      this.pending = false;
+
+      return true;
+    } catch (e) {
+      if ((e as GaxiosError).response) {
+        const err = e as GaxiosError;
+        this.logger.warn(err.message);
+      }
+      this.logger.warn("Error marking completion");
+    }
+  }
+
   async getGoogleTasks(): Promise<Display.TaskData | undefined> {
     if (this.pending) {
       return;
@@ -33,7 +75,7 @@ export class GoogleTaskService {
 
   async getListTasks(accountConfig: AccountConfig, listId: string, maxResults: number, showCompleted: boolean, showHidden: boolean, maxDate?: string): Promise<Display.Task[]> {
     if (!this.taskService) {
-      this.logger.error("Task Service not initialized");
+      this.logger.error(TaskServiceNotInitialized);
       return [];
     }
 
@@ -49,6 +91,8 @@ export class GoogleTaskService {
       });
       const listResults: tasks_v1.Schema$Tasks = res.data;
 
+
+
       listResults.items?.forEach((gTask) => {
         tasks.push({
           id: gTask.id ?? "",
@@ -58,7 +102,8 @@ export class GoogleTaskService {
           position: gTask.position ? parseInt(gTask.position) : -1,
           notes: gTask.notes ?? undefined,
           status: gTask.status ?? undefined,
-          due: gTask.due ?? undefined
+          due: gTask.due ?? undefined,
+          listId: listId
         });
       });
     } catch (e) {
@@ -115,7 +160,7 @@ export class GoogleTaskService {
 
   async getAccountTasks(accountConfig: AccountConfig, planned: boolean): Promise<Display.Task[] | undefined> {
     if (!this.taskService) {
-      this.logger.error("Task Service not initialized");
+      this.logger.error(TaskServiceNotInitialized);
       return undefined;
     }
 
@@ -129,7 +174,8 @@ export class GoogleTaskService {
       this.logger.info(`Checking list ${list.title}`);
       if (this.includeList(list.title, accountConfig) && list.id !== undefined && list.id !== null) {
         this.logger.info(`Including list ${list.title}`);
-        const listTasks = await this.getListTasks(accountConfig, list.id, planned ? 100 : this.dataConfig.maxResults, planned ? this.dataConfig.showCompleted : false, false, planned ? maxDate : undefined);
+        const listTasks = await this.getListTasks(accountConfig, list.id, planned ? 100 : this.dataConfig.maxResults, this.dataConfig.showCompleted, this.dataConfig.showCompleted, planned ? maxDate : undefined);
+        this.logger.info(JSON.stringify(listTasks));
         this.logger.info(`Found ${listTasks.length} tasks`);
         tasks.push(...listTasks);
         this.logger.info(`Total tasks = ${tasks.length}`);
