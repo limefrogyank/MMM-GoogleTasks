@@ -10,7 +10,7 @@ Displays tasks from Google Tasks App
 
 ### Example
 
-![Example of MMM-GoogleTasks](images/sample.png?raw=true "Example screenshot")
+![Example of MMM-GoogleTasks](images/sample1.png?raw=true "Example screenshot")
 
 ### Dependencies
 
